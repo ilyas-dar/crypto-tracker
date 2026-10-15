@@ -13,3 +13,6 @@ terraform/.terraform.lock.hcl
 *.pem
 *.key
 venv/
+/aws/dist/
+/aws/
+/awscliv2.zip

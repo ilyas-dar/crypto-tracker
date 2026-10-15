@@ -119,3 +119,5 @@ terraform destroy
 - bitcoin, price above, (a value just under the current price) to test quickly
 - ethereum, % change in window, 0.5, 5 minutes
 - bitcoin, volume up %, 5, 10 minutes  
+
+106.219.65.66

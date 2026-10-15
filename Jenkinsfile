@@ -60,7 +60,8 @@ pipeline {
             steps {
                 withCredentials([sshUserPrivateKey(credentialsId: 'ec2-ssh-key', keyFileVariable: 'KEY')]) {
                     sh '''
-                      ssh -o StrictHostKeyChecking=no -i "$KEY" ec2-user@$EC2_HOST \
+                      ssh -vvv -o BatchMode=yes -o IdentitiesOnly=yes \
+                        -o StrictHostKeyChecking=no -i "$KEY" ec2-user@$EC2_HOST \
                         "cd ~/crypto-tracker && git pull && docker compose pull && docker compose up -d"
                     '''
                 }
