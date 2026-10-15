@@ -6,7 +6,7 @@ pipeline {
     }
 
     environment {
-        DOCKERHUB_USER = 'YOUR_DOCKERHUB_USERNAME'   // <-- change this
+        DOCKERHUB_USER = 'ilyasalee'
         IMAGE          = "${DOCKERHUB_USER}/crypto-tracker"
         TAG            = "${env.BUILD_NUMBER}"
     }
@@ -20,10 +20,17 @@ pipeline {
 
         stage('Unit tests') {
             steps {
-                // runs pytest in a throwaway Python container (mocked API, no internet calls to CoinGecko)
+                // Jenkins runs in a container, so copy the code in instead of bind-mounting it
                 sh '''
-                  docker run --rm -v "$PWD":/work -w /work python:3.12-slim \
+                  set +e
+                  docker rm -f ci-test-$BUILD_NUMBER >/dev/null 2>&1
+                  docker create --name ci-test-$BUILD_NUMBER -w /work python:3.12-slim \
                     sh -c "pip install -q -r requirements.txt && pytest -q"
+                  docker cp . ci-test-$BUILD_NUMBER:/work
+                  docker start -a ci-test-$BUILD_NUMBER
+                  rc=$?
+                  docker rm -f ci-test-$BUILD_NUMBER
+                  exit $rc
                 '''
             }
         }
