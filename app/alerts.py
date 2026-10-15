@@ -49,7 +49,7 @@ def run_alerts(latest_by_coin):
         msg = evaluate_rule(rule, current, past)
         if msg:
             db.mark_triggered(rule["id"])
-            db.log_alert(rule["id"], rule["coin_id"], msg)
+            db.log_alert(rule["id"],rule["coin_id"], msg)
             notify(msg)
             fired.append((rule["rule_type"], msg))
     return fired
