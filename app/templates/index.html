@@ -1,129 +1,836 @@
+
 <!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Crypto Live Tracker</title>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
 <style>
-:root{--bg:#e9edf2;--panel:#fff;--ink:#14213d;--muted:#5b6679;--line:#d3dae4;--accent:#1d4ed8;--up:#0f7b4a;--down:#b42318}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "IBM Plex Sans",system-ui,sans-serif}
-header{background:var(--ink);color:#fff;padding:18px 28px;display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px}
-header h1{margin:0;font-size:20px;font-weight:600}
-header span{color:#b9c4dc;font-size:13px}
-main{max-width:1100px;margin:24px auto;padding:0 16px;display:grid;gap:20px}
-section{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:18px 20px}
-h2{margin:0 0 12px;font-size:16px;font-weight:600}
-table{width:100%;border-collapse:collapse}
-th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line)}
-th{font-weight:500;color:var(--muted);font-size:13px}
-td.num{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;text-align:right}
-th.num{text-align:right}
-form.inline{display:inline}
-input,select,button{font:inherit;padding:7px 10px;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--ink)}
-button{background:var(--accent);color:#fff;border-color:var(--accent);cursor:pointer}
-button.ghost{background:#fff;color:var(--down);border-color:var(--line);padding:3px 9px}
-button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.empty{color:var(--muted)}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-@media(max-width:800px){.two{grid-template-columns:1fr}}
-.alert{border-left:3px solid var(--down);padding:4px 10px;margin:6px 0;background:#fdf2f1}
-.alert small{color:var(--muted);display:block}
+:root {
+  --bg: #0b1120;
+  --panel: #111a2e;
+  --panel-hover: #172239;
+  --ink: #e8edf7;
+  --muted: #8996ad;
+  --line: #25314a;
+  --accent: #6685ff;
+  --accent-hover: #829aff;
+  --up: #35d49a;
+  --down: #ff7185;
+  --radius: 14px;
+  --shadow: 0 10px 35px rgba(0, 0, 0, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse at 10% 0%, rgba(65, 95, 190, .12), transparent 38%),
+    var(--bg);
+  color: var(--ink);
+  font: 14px/1.6 "IBM Plex Sans", system-ui, sans-serif;
+}
+
+button, input, select {
+  font: inherit;
+}
+
+header {
+  position: relative;
+  background: rgba(17, 26, 46, .88);
+  border-bottom: 1px solid var(--line);
+  padding: 22px max(24px, calc((100% - 1200px) / 2));
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.brand-icon {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #6685ff, #8a62e8);
+  color: white;
+  font-size: 22px;
+  font-weight: 700;
+  box-shadow: 0 5px 18px rgba(102, 133, 255, .22);
+}
+
+header h1 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -.4px;
+}
+
+.brand-subtitle {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.header-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid rgba(53, 212, 154, .2);
+  background: rgba(53, 212, 154, .08);
+  color: var(--up);
+  border-radius: 30px;
+  padding: 5px 10px;
+  font-weight: 600;
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  background: currentColor;
+  border-radius: 50%;
+}
+
+.header-meta a {
+  color: #a7baff;
+  text-decoration: none;
+}
+
+.header-meta a:hover {
+  color: white;
+}
+
+main {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 30px 24px 48px;
+  display: grid;
+  gap: 22px;
+}
+
+.page-intro {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.page-intro h2 {
+  margin: 0;
+  font-size: 25px;
+  line-height: 1.3;
+  letter-spacing: -.7px;
+}
+
+.page-intro p {
+  color: var(--muted);
+  margin: 6px 0 0;
+  font-size: 13px;
+}
+
+.section {
+  min-width: 0;
+  background: linear-gradient(145deg, rgba(20, 31, 53, .98), rgba(15, 24, 42, .98));
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 22px;
+  box-shadow: var(--shadow);
+}
+
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.section-heading h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -.1px;
+}
+
+.section-description {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 3px;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 30px;
+  padding: 4px 10px;
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  white-space: nowrap;
+}
+
+th, td {
+  text-align: left;
+  padding: 13px 15px;
+  border-bottom: 1px solid rgba(37, 49, 74, .8);
+}
+
+th {
+  background: rgba(9, 15, 29, .38);
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .7px;
+  font-weight: 600;
+}
+
+tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+tbody tr {
+  transition: background .15s ease;
+}
+
+tbody tr:hover {
+  background: rgba(102, 133, 255, .045);
+}
+
+td {
+  font-size: 13px;
+}
+
+td.num, th.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+td.num {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+}
+
+.coin-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.coin-symbol {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.coin-id {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.price-value {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.empty {
+  color: var(--muted);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 30px 16px;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  color: var(--muted);
+}
+
+.empty-icon {
+  display: block;
+  font-size: 26px;
+  margin-bottom: 8px;
+}
+
+.form-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.add-form {
+  margin-top: 16px;
+  padding: 14px;
+  background: rgba(8, 14, 27, .4);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+input, select {
+  min-width: 0;
+  padding: 10px 12px;
+  color: var(--ink);
+  background: #0c1425;
+  border: 1px solid #2a3854;
+  border-radius: 8px;
+  outline: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+input::placeholder {
+  color: #68768e;
+}
+
+input:focus, select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(102, 133, 255, .12);
+}
+
+select {
+  cursor: pointer;
+  max-width: 100%;
+}
+
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 14px;
+  color: white;
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s ease, transform .15s ease;
+}
+
+button:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+button.ghost {
+  padding: 5px 10px;
+  color: var(--down);
+  background: rgba(255, 113, 133, .06);
+  border: 1px solid rgba(255, 113, 133, .22);
+  border-radius: 7px;
+  font-size: 11px;
+}
+
+button.ghost:hover {
+  background: rgba(255, 113, 133, .14);
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+form.inline {
+  display: inline;
+}
+
+.watchlist-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.watchlist-footer .section-description {
+  margin: 0;
+}
+
+.chart-container {
+  position: relative;
+  height: 300px;
+  width: 100%;
+}
+
+.two {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr);
+  gap: 22px;
+}
+
+.rule-form {
+  padding: 14px;
+  background: rgba(8, 14, 27, .4);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.rule-form select[name="coin"] {
+  flex: 1 1 100px;
+}
+
+.rule-form select[name="rule_type"] {
+  flex: 1 1 145px;
+}
+
+.rule-form input {
+  flex: 1 1 90px;
+  width: 100px;
+}
+
+.rule-table {
+  margin-top: 15px;
+}
+
+.rule-table td {
+  padding: 12px 9px;
+}
+
+.rule-name {
+  color: #a9baff;
+  text-transform: capitalize;
+}
+
+.alert-list {
+  display: grid;
+  gap: 10px;
+}
+
+.alert {
+  border: 1px solid rgba(255, 113, 133, .18);
+  border-left: 3px solid var(--down);
+  border-radius: 9px;
+  padding: 12px 14px;
+  background: rgba(255, 113, 133, .045);
+  overflow-wrap: anywhere;
+}
+
+.alert small {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+}
+
+.footer {
+  text-align: center;
+  color: #65738b;
+  font-size: 11px;
+  padding: 0 12px 24px;
+}
+
+@media (max-width: 850px) {
+  main {
+    padding: 24px 16px 36px;
+  }
+
+  .two {
+    grid-template-columns: 1fr;
+  }
+
+  .section {
+    padding: 18px;
+  }
+}
+
+@media (max-width: 520px) {
+  header {
+    padding: 18px 16px;
+  }
+
+  header h1 {
+    font-size: 17px;
+  }
+
+  .header-meta {
+    gap: 9px;
+  }
+
+  main {
+    padding: 20px 12px 30px;
+    gap: 15px;
+  }
+
+  .page-intro h2 {
+    font-size: 22px;
+  }
+
+  .section {
+    padding: 15px 12px;
+    border-radius: 11px;
+  }
+
+  .section-heading {
+    align-items: flex-start;
+  }
+
+  .add-form .form-row > input {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .add-form .form-row > button {
+    width: 100%;
+  }
+
+  .chart-container {
+    height: 240px;
+  }
+
+  .rule-form .form-row > * {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+  }
+
+  .watchlist-footer {
+    align-items: stretch;
+  }
+}
 </style>
 </head>
+
 <body>
 <header>
-  <h1>Crypto Live Tracker</h1>
-  <span>Prices in {{ currency }} · refreshed every {{ interval }}s · <a style="color:#b9c4dc" href="/metrics">/metrics</a></span>
+  <div class="brand">
+    <div class="brand-icon" aria-hidden="true">₿</div>
+    <div>
+      <h1>Crypto Live Tracker</h1>
+      <div class="brand-subtitle">Your cryptocurrency market dashboard</div>
+    </div>
+  </div>
+
+  <div class="header-meta">
+    <span class="status">
+      <span class="status-dot"></span>
+      Tracker active
+    </span>
+    <span>Prices in {{ currency }}</span>
+    <span>Refresh: {{ interval }}s</span>
+    <a href="/metrics">Metrics ↗</a>
+  </div>
 </header>
+
 <main>
-  <section>
-    <h2>Watchlist</h2>
+  <div class="page-intro">
+    <div>
+      <h2>Market overview</h2>
+      <p>Monitor your watchlist, price history, and custom alerts.</p>
+    </div>
+    <span class="pill">Live tracker dashboard</span>
+  </div>
+
+  <section class="section">
+    <div class="section-heading">
+      <div>
+        <h2>◈ Watchlist</h2>
+        <div class="section-description">Your tracked cryptocurrencies and latest available prices</div>
+      </div>
+      <span class="pill">{{ coins|length }} tracked</span>
+    </div>
+
     {% if prices %}
-    <table>
-      <tr><th>Coin</th><th class="num">Price</th><th class="num">Market cap</th><th class="num">24h volume</th><th></th></tr>
-      {% for p in prices %}
-      <tr>
-        <td><strong>{{ p.symbol }}</strong> <span class="empty">{{ p.coin_id }}</span></td>
-        <td class="num">{{ "{:,.2f}".format(p.price) }}</td>
-        <td class="num">{{ "{:,.0f}".format(p.market_cap) }}</td>
-        <td class="num">{{ "{:,.0f}".format(p.volume) }}</td>
-        <td class="num"><form class="inline" method="post" action="/unwatch/{{ p.coin_id }}"><button class="ghost">Remove</button></form></td>
-      </tr>
-      {% endfor %}
-    </table>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Asset</th>
+            <th class="num">Price ({{ currency }})</th>
+            <th class="num">Market cap</th>
+            <th class="num">24h volume</th>
+            <th class="num">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in prices %}
+          <tr>
+            <td>
+              <span class="coin-name">
+                <strong class="coin-symbol">{{ p.symbol }}</strong>
+                <span class="coin-id">{{ p.coin_id }}</span>
+              </span>
+            </td>
+            <td class="num price-value">{{ "{:,.2f}".format(p.price) }}</td>
+            <td class="num">{{ "{:,.0f}".format(p.market_cap) }}</td>
+            <td class="num">{{ "{:,.0f}".format(p.volume) }}</td>
+            <td class="num">
+              <form class="inline" method="post" action="/unwatch/{{ p.coin_id }}">
+                <button class="ghost" type="submit">Remove</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
     {% else %}
-    <p class="empty">No prices yet. The first poll runs a few seconds after start; refresh the page.</p>
+    <div class="empty-state">
+      <span class="empty-icon">◈</span>
+      <strong>No prices available yet</strong>
+      <div class="section-description">The first poll runs shortly after startup. Try refreshing the page in a few seconds.</div>
+    </div>
     {% endif %}
-    <form method="post" action="/watch" class="row" style="margin-top:14px">
-      <input name="coin" placeholder="CoinGecko id, e.g. dogecoin" required>
-      <button>Add coin</button>
-    </form>
+
+    <div class="add-form">
+      <div class="section-description" style="margin-bottom:10px">Add a cryptocurrency to your watchlist</div>
+      <form method="post" action="/watch" class="form-row">
+        <input name="coin" placeholder="CoinGecko ID, e.g. dogecoin" required aria-label="CoinGecko coin ID">
+        <button type="submit">＋ Add coin</button>
+      </form>
+    </div>
   </section>
 
-  <section>
-    <h2>Price history</h2>
-    <div class="row" style="margin-bottom:10px">
-      <select id="coinPick">{% for c in coins %}<option value="{{ c }}">{{ c }}</option>{% endfor %}</select>
+  <section class="section">
+    <div class="section-heading">
+      <div>
+        <h2>⌁ Price history</h2>
+        <div class="section-description">Review historical prices for a selected cryptocurrency</div>
+      </div>
+      <span class="pill">Historical data</span>
     </div>
-    <canvas id="chart" height="90"></canvas>
+
+    <div class="form-row" style="margin-bottom:18px">
+      <label for="coinPick" class="section-description">Selected asset</label>
+      <select id="coinPick" aria-label="Select cryptocurrency">
+        {% for c in coins %}
+        <option value="{{ c }}">{{ c }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="chart-container">
+      <canvas id="chart" aria-label="Cryptocurrency price history chart"></canvas>
+    </div>
   </section>
 
   <div class="two">
-    <section>
-      <h2>Alert rules</h2>
-      <form method="post" action="/rules" class="row">
-        <select name="coin">{% for c in coins %}<option>{{ c }}</option>{% endfor %}</select>
-        <select name="rule_type">
-          <option value="price_above">Price above</option>
-          <option value="price_below">Price below</option>
-          <option value="pct_change">% change in window</option>
-          <option value="volume_spike">Volume up % in window</option>
-        </select>
-        <input name="value" type="number" step="any" placeholder="Value" required style="width:100px">
-        <input name="window_min" type="number" placeholder="Window (min)" style="width:120px">
-        <button>Create rule</button>
+    <section class="section">
+      <div class="section-heading">
+        <div>
+          <h2>⚙ Alert rules</h2>
+          <div class="section-description">Create conditions to monitor market movements</div>
+        </div>
+        <span class="pill">{{ rules|length }} rules</span>
+      </div>
+
+      <form method="post" action="/rules" class="rule-form">
+        <div class="form-row">
+          <select name="coin" aria-label="Coin for alert rule">
+            {% for c in coins %}
+            <option>{{ c }}</option>
+            {% endfor %}
+          </select>
+
+          <select name="rule_type" aria-label="Alert rule type">
+            <option value="price_above">Price above</option>
+            <option value="price_below">Price below</option>
+            <option value="pct_change">% change in window</option>
+            <option value="volume_spike">Volume up % in window</option>
+          </select>
+
+          <input name="value" type="number" step="any" placeholder="Value" required aria-label="Alert threshold">
+
+          <input name="window_min" type="number" placeholder="Window (min)" aria-label="Window in minutes">
+
+          <button type="submit">＋ Create rule</button>
+        </div>
       </form>
+
       {% if rules %}
-      <table style="margin-top:12px">
-        {% for r in rules %}
-        <tr><td>{{ r.coin_id }}</td><td>{{ r.rule_type.replace('_',' ') }}</td><td class="num">{{ r.value }}</td>
-        <td class="num"><form class="inline" method="post" action="/rules/{{ r.id }}/delete"><button class="ghost">Delete</button></form></td></tr>
-        {% endfor %}
-      </table>
-      {% else %}<p class="empty">No rules yet. Create one above.</p>{% endif %}
+      <div class="table-wrap rule-table">
+        <table>
+          <tbody>
+            {% for r in rules %}
+            <tr>
+              <td>
+                <strong>{{ r.coin_id }}</strong>
+                <div class="section-description rule-name">{{ r.rule_type.replace('_',' ') }}</div>
+              </td>
+              <td class="num">{{ r.value }}</td>
+              <td class="num">
+                <form class="inline" method="post" action="/rules/{{ r.id }}/delete">
+                  <button class="ghost" type="submit">Delete</button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state" style="margin-top:14px">
+        No alert rules yet.
+        <div class="section-description">Create a rule above to start monitoring conditions.</div>
+      </div>
+      {% endif %}
     </section>
 
-    <section>
-      <h2>Triggered alerts</h2>
-      {% for a in alerts %}
-      <div class="alert">{{ a.message }}<small>{{ a.ts | int }}</small></div>
-      {% else %}<p class="empty">Nothing has fired yet.</p>{% endfor %}
+    <section class="section">
+      <div class="section-heading">
+        <div>
+          <h2>⚡ Triggered alerts</h2>
+          <div class="section-description">Recent alerts generated by your configured rules</div>
+        </div>
+        <span class="pill">{{ alerts|length }} alerts</span>
+      </div>
+
+      {% if alerts %}
+      <div class="alert-list">
+        {% for a in alerts %}
+        <div class="alert">
+          {{ a.message }}
+          <small>Timestamp: {{ a.ts | int }}</small>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <span class="empty-icon">✓</span>
+        <strong>All quiet for now</strong>
+        <div class="section-description">Triggered alerts will appear here when your rules match.</div>
+      </div>
+      {% endif %}
     </section>
   </div>
 </main>
+
+<div class="footer">
+  Crypto Live Tracker · Market data and monitoring
+</div>
+
 <script>
 const pick = document.getElementById('coinPick');
 let chart;
-async function draw(){
-  if(!pick.value) return;
+
+async function draw() {
+  if (!pick.value) return;
+
   const r = await fetch('/api/history/' + pick.value);
   const d = await r.json();
-  const labels = d.map(x => new Date(x.ts*1000).toLocaleTimeString());
+
+  const labels = d.map(x => new Date(x.ts * 1000).toLocaleTimeString());
   const data = d.map(x => x.price);
-  if(chart) chart.destroy();
+
+  if (chart) chart.destroy();
+
   chart = new Chart(document.getElementById('chart'), {
-    type:'line',
-    data:{labels, datasets:[{label:pick.value, data, borderColor:'#1d4ed8', pointRadius:0, tension:.25}]},
-    options:{animation:false, plugins:{legend:{display:false}}}
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: pick.value,
+        data,
+        borderColor: '#8198ff',
+        backgroundColor: 'rgba(102, 133, 255, 0.10)',
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        pointHoverBackgroundColor: '#8198ff',
+        borderWidth: 2,
+        tension: 0.25,
+        fill: true
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      interaction: {
+        intersect: false,
+        mode: 'index'
+      },
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          backgroundColor: '#172239',
+          borderColor: '#25314a',
+          borderWidth: 1,
+          titleColor: '#e8edf7',
+          bodyColor: '#e8edf7',
+          padding: 12,
+          displayColors: false
+        }
+      },
+      scales: {
+        x: {
+          grid: {
+            display: false
+          },
+          ticks: {
+            color: '#8996ad',
+            maxTicksLimit: 7
+          },
+          border: {
+            color: '#25314a'
+          }
+        },
+        y: {
+          grid: {
+            color: 'rgba(137, 150, 173, 0.10)'
+          },
+          ticks: {
+            color: '#8996ad',
+            maxTicksLimit: 6
+          },
+          border: {
+            display: false
+          }
+        }
+      }
+    }
   });
 }
+
 pick.addEventListener('change', draw);
 draw();
+
 setInterval(() => location.reload(), {{ interval * 1000 }});
 </script>
 </body>
