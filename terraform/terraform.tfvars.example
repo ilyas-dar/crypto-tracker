@@ -1,0 +1,6 @@
+# Copy to terraform.tfvars and fill in
+region         = "ap-south-1"
+my_ip_cidr     = "YOUR.PUBLIC.IP.HERE/32"
+github_repo    = "https://github.com/YOUR_USER/crypto-tracker.git"
+dockerhub_user = "YOUR_DOCKERHUB_USERNAME"
+public_key_path = "~/.ssh/id_rsa.pub"

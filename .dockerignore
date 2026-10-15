@@ -1,0 +1,9 @@
+.git
+terraform
+tests
+monitoring
+__pycache__
+*.pyc
+data
+.env
+Jenkinsfile

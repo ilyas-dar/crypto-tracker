@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crypto Live Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#e9edf2;--panel:#fff;--ink:#14213d;--muted:#5b6679;--line:#d3dae4;--accent:#1d4ed8;--up:#0f7b4a;--down:#b42318}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "IBM Plex Sans",system-ui,sans-serif}
+header{background:var(--ink);color:#fff;padding:18px 28px;display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px}
+header h1{margin:0;font-size:20px;font-weight:600}
+header span{color:#b9c4dc;font-size:13px}
+main{max-width:1100px;margin:24px auto;padding:0 16px;display:grid;gap:20px}
+section{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:18px 20px}
+h2{margin:0 0 12px;font-size:16px;font-weight:600}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line)}
+th{font-weight:500;color:var(--muted);font-size:13px}
+td.num{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;text-align:right}
+th.num{text-align:right}
+form.inline{display:inline}
+input,select,button{font:inherit;padding:7px 10px;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--ink)}
+button{background:var(--accent);color:#fff;border-color:var(--accent);cursor:pointer}
+button.ghost{background:#fff;color:var(--down);border-color:var(--line);padding:3px 9px}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.empty{color:var(--muted)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:800px){.two{grid-template-columns:1fr}}
+.alert{border-left:3px solid var(--down);padding:4px 10px;margin:6px 0;background:#fdf2f1}
+.alert small{color:var(--muted);display:block}
+</style>
+</head>
+<body>
+<header>
+  <h1>Crypto Live Tracker</h1>
+  <span>Prices in {{ currency }} · refreshed every {{ interval }}s · <a style="color:#b9c4dc" href="/metrics">/metrics</a></span>
+</header>
+<main>
+  <section>
+    <h2>Watchlist</h2>
+    {% if prices %}
+    <table>
+      <tr><th>Coin</th><th class="num">Price</th><th class="num">Market cap</th><th class="num">24h volume</th><th></th></tr>
+      {% for p in prices %}
+      <tr>
+        <td><strong>{{ p.symbol }}</strong> <span class="empty">{{ p.coin_id }}</span></td>
+        <td class="num">{{ "{:,.2f}".format(p.price) }}</td>
+        <td class="num">{{ "{:,.0f}".format(p.market_cap) }}</td>
+        <td class="num">{{ "{:,.0f}".format(p.volume) }}</td>
+        <td class="num"><form class="inline" method="post" action="/unwatch/{{ p.coin_id }}"><button class="ghost">Remove</button></form></td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% else %}
+    <p class="empty">No prices yet. The first poll runs a few seconds after start; refresh the page.</p>
+    {% endif %}
+    <form method="post" action="/watch" class="row" style="margin-top:14px">
+      <input name="coin" placeholder="CoinGecko id, e.g. dogecoin" required>
+      <button>Add coin</button>
+    </form>
+  </section>
+
+  <section>
+    <h2>Price history</h2>
+    <div class="row" style="margin-bottom:10px">
+      <select id="coinPick">{% for c in coins %}<option value="{{ c }}">{{ c }}</option>{% endfor %}</select>
+    </div>
+    <canvas id="chart" height="90"></canvas>
+  </section>
+
+  <div class="two">
+    <section>
+      <h2>Alert rules</h2>
+      <form method="post" action="/rules" class="row">
+        <select name="coin">{% for c in coins %}<option>{{ c }}</option>{% endfor %}</select>
+        <select name="rule_type">
+          <option value="price_above">Price above</option>
+          <option value="price_below">Price below</option>
+          <option value="pct_change">% change in window</option>
+          <option value="volume_spike">Volume up % in window</option>
+        </select>
+        <input name="value" type="number" step="any" placeholder="Value" required style="width:100px">
+        <input name="window_min" type="number" placeholder="Window (min)" style="width:120px">
+        <button>Create rule</button>
+      </form>
+      {% if rules %}
+      <table style="margin-top:12px">
+        {% for r in rules %}
+        <tr><td>{{ r.coin_id }}</td><td>{{ r.rule_type.replace('_',' ') }}</td><td class="num">{{ r.value }}</td>
+        <td class="num"><form class="inline" method="post" action="/rules/{{ r.id }}/delete"><button class="ghost">Delete</button></form></td></tr>
+        {% endfor %}
+      </table>
+      {% else %}<p class="empty">No rules yet. Create one above.</p>{% endif %}
+    </section>
+
+    <section>
+      <h2>Triggered alerts</h2>
+      {% for a in alerts %}
+      <div class="alert">{{ a.message }}<small>{{ a.ts | int }}</small></div>
+      {% else %}<p class="empty">Nothing has fired yet.</p>{% endfor %}
+    </section>
+  </div>
+</main>
+<script>
+const pick = document.getElementById('coinPick');
+let chart;
+async function draw(){
+  if(!pick.value) return;
+  const r = await fetch('/api/history/' + pick.value);
+  const d = await r.json();
+  const labels = d.map(x => new Date(x.ts*1000).toLocaleTimeString());
+  const data = d.map(x => x.price);
+  if(chart) chart.destroy();
+  chart = new Chart(document.getElementById('chart'), {
+    type:'line',
+    data:{labels, datasets:[{label:pick.value, data, borderColor:'#1d4ed8', pointRadius:0, tension:.25}]},
+    options:{animation:false, plugins:{legend:{display:false}}}
+  });
+}
+pick.addEventListener('change', draw);
+draw();
+setInterval(() => location.reload(), {{ interval * 1000 }});
+</script>
+</body>
+</html>
